@@ -1,0 +1,73 @@
+---
+
+- name: start fuse
+  shell: ./start 
+    chdir='{{ fuse_path }}/bin'
+  become: yes
+  become_user: '{{ fuse_user }}'
+  async: 60
+  poll: 0
+  environment:
+    JAVA_OPTS: '{{ java_opts }}'
+
+- name: wait for fuse to start
+  wait_for: port=8101 host=localhost delay=10
+
+- name: install service wrapper feature
+  command: "{{ fuse_client_invocation}} 'features:install wrapper'"
+  become: yes
+  become_user: '{{ fuse_user }}'
+  environment: 
+    JAVA_OPTS: '{{ java_opts }}'
+
+- name: generate service wrapper
+  command: "{{ fuse_client_invocation}} 'wrapper:install -n fuse'"
+  become: yes
+  become_user: '{{ fuse_user }}'
+  environment:
+    JAVA_OPTS: '{{ java_opts }}'
+
+- name: stop fuse
+  shell: ./stop 
+    chdir='{{ fuse_path }}/bin'
+  become: yes
+  become_user: '{{ fuse_user }}'
+  async: 60
+  poll: 0
+
+- name: configure fuse service
+  lineinfile: 
+    dest='{{ fuse_path }}/etc/fuse-wrapper.conf'
+    regexp='^set.default.JAVA_HOME='
+    line='set.default.JAVA_HOME={{ java_home }}'
+    state=present
+
+- name: set java opts
+  lineinfile: 
+    dest='{{ fuse_path }}/etc/fuse-wrapper.conf'
+    regexp='^wrapper.java.additional.10'
+    insertafter='^wrapper.java.additional.9'
+    line='wrapper.java.additional.10=-Djava.security.egd=file:/dev/./urandom'
+    state=present
+
+- name: set service fuse_user
+  lineinfile:
+     dest='{{ fuse_path }}/bin/fuse-service'
+     regexp='^#RUN_AS_USER='
+     line='RUN_AS_USER={{ fuse_user }}'
+     state=present
+
+- name: symlink to the fuse service
+  file: 
+    src='{{ fuse_path }}/bin/fuse-service'
+    dest='/etc/init.d/fuse'
+    state=link
+
+- name: enable fuse service
+  service: name=fuse enabled=yes
+
+- name: start fuse
+  command: service fuse start
+
+- name: wait for fuse to start
+  wait_for: port=8101 host=localhost delay=10

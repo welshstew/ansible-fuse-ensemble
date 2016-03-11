@@ -1,0 +1,13 @@
+---
+
+- hosts: fuse
+  gather_facts: yes
+  sudo: yes
+  roles:
+    - fuse
+
+- hosts: fabric
+  gather_facts: yes
+  sudo: yes
+  roles:
+    - fabric

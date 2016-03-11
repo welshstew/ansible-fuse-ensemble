@@ -1,0 +1,57 @@
+---
+
+- name: set fabric leader ip
+  set_fact: fabric_leader_ip={{ ansible_default_ipv4.address }}
+  when: inventory_hostname == groups['fabric'][0]
+
+- name: set jolokia uri
+  set_fact: 
+    jolokia_uri='http://{{ inventory_hostname }}:8181/jolokia'
+
+- name: detect fabric
+  local_action: uri 
+    url='{{ jolokia_uri }}/exec/io.fabric8:type=Fabric/containerIds()'
+    user=admin
+    password=admin
+    return_content=yes
+  sudo: no
+  ignore_errors: yes
+  register: output
+
+- name: query for containers
+  set_fact: 
+    containers="{{ (output.content | from_json).value }}"
+  when: output.status is defined and output.status == 200
+
+- name: create fabric
+  command: "{{ fuse_client_invocation}} 'fabric:create --new-user admin --new-user-password admin --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} --wait-for-provisioning'"
+  become: yes
+  become_user: '{{ fuse_user }}'
+  environment: 
+    JAVA_OPTS: '{{ java_opts }}'
+  when: "inventory_hostname == groups['fabric'][0] and (containers is not defined or 'root' not in containers)"
+  register: leader
+
+- name: wait for leader to shut down
+  pause: minutes=1
+
+- name: wait for fuse to start
+  wait_for: port=8101 host=localhost delay=10
+  when: "inventory_hostname == groups['fabric'][0] and leader|changed"
+
+- name: join fabric
+  command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(groups['fabric'][0]).get('fabric_leader_ip') }}:2181 {{ 'root%d' | format(item.0 + 1) }}'"
+  become: yes
+  become_user: '{{ fuse_user }}'
+  environment: 
+    JAVA_OPTS: '{{ java_opts }}'
+  when: "inventory_hostname != groups['fabric'][0] and inventory_hostname == groups['fabric'][item.0]"
+  with_indexed_items: groups['fabric']
+  register: ensemble
+
+- name: wait for ensemble members to shut down
+  pause: minutes=1
+
+- name: restart ensemble members
+  command: "service fuse restart"
+  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"

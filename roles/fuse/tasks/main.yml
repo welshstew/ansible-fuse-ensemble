@@ -1,0 +1,63 @@
+---
+
+- name: subscribe to RHEL content
+  redhat_subscription: 
+    state=present
+    username='{{ rh_login }}'
+    password='{{ rh_pass }}'
+    autosubscribe=true
+  when: ansible_distribution == 'RedHat' and rh_subscription == yes
+
+- name: install java 1.7
+  yum: name=java-1.7.0-openjdk state=present
+
+- name: install unzip
+  yum: name=unzip state=present
+
+- name: add fuse group
+  group: 
+    name='{{ fuse_group }}'
+    state=present
+
+- name: add fuse user
+  user: 
+    name='{{ fuse_user }}'
+    group='{{ fuse_group }}'
+    home='{{ fuse_user_home }}'
+
+- name: copy the fuse archive
+  copy: 
+    src='{{ fuse_archive }}'
+    dest='{{ fuse_user_home }}'
+
+- name: detect fuse installation
+  stat: 
+    path='{{ fuse_path }}'
+  register: install_path
+
+- name: unarchive fuse
+  unarchive: 
+    src='{{ fuse_user_home }}/{{ fuse_archive}}'
+    dest='{{ fuse_user_home }}'
+    owner='{{ fuse_user }}'
+    group='{{ fuse_group }}'
+    copy=no
+  when: install_path.stat.exists is defined and install_path.stat.exists == False
+
+- name: add fuse admin user
+  lineinfile: 
+    dest='{{ fuse_path }}/etc/users.properties'
+    regexp='^{{ fuse_admin }}={{ fuse_admin_pass }},admin'
+    insertafter='^#admin=admin'
+    line='{{ fuse_admin }}={{ fuse_admin_pass }},admin'
+    state=present
+  when: install_path.stat.exists is defined and install_path.stat.exists == False
+
+- name: detect fuse service
+  stat: 
+    path='{{ fuse_path }}/bin/fuse-service'
+  register: service_path
+
+- name: configure service wrapper
+  include: wrapper.yml
+  when: service_path.stat.exists == False
