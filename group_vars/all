@@ -10,8 +10,7 @@ fuse_admin_pass: admin
 fuse_client_invocation: '{{ fuse_path }}/bin/client -r 3 -d 10 -u {{ fuse_admin }} -p {{ fuse_admin_pass }}'
 
 java_home: /usr/lib/jvm/jre-1.7.0-openjdk
-java_opts: -Djava.security.egd=file:/dev/./urandom
 
-rh_subscription: no
+rh_subscription: yes
 rh_login: user@redhat.com
 rh_pass: pass

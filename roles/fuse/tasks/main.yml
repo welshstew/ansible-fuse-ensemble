@@ -14,6 +14,13 @@
 - name: install unzip
   yum: name=unzip state=present
 
+- name: configure java security
+  lineinfile:
+    dest='{{java_home}}/lib/security/java.security'
+    regexp='^securerandom.source='
+    line='securerandom.source=file:/dev/./urandom'
+    state=present
+
 - name: add fuse group
   group: 
     name='{{ fuse_group }}'

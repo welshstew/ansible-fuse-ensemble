@@ -27,8 +27,6 @@
   command: "{{ fuse_client_invocation}} 'fabric:create --new-user admin --new-user-password admin --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} --wait-for-provisioning'"
   become: yes
   become_user: '{{ fuse_user }}'
-  environment: 
-    JAVA_OPTS: '{{ java_opts }}'
   when: "inventory_hostname == groups['fabric'][0] and (containers is not defined or 'root' not in containers)"
   register: leader
 
@@ -43,8 +41,6 @@
   command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(groups['fabric'][0]).get('fabric_leader_ip') }}:2181 {{ 'root%d' | format(item.0 + 1) }}'"
   become: yes
   become_user: '{{ fuse_user }}'
-  environment: 
-    JAVA_OPTS: '{{ java_opts }}'
   when: "inventory_hostname != groups['fabric'][0] and inventory_hostname == groups['fabric'][item.0]"
   with_indexed_items: groups['fabric']
   register: ensemble
