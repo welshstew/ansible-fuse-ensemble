@@ -6,7 +6,7 @@
     username='{{ rh_login }}'
     password='{{ rh_pass }}'
     autosubscribe=true
-  when: ansible_distribution == 'RedHat' and rh_subscription == yes
+  when: ansible_distribution == 'RedHat' and rh_subscription
 
 - name: install java 1.7
   yum: name=java-1.7.0-openjdk state=present
