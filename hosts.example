@@ -5,3 +5,5 @@
 
 [fabric]
 10.3.10.128 ansible_ssh_user=cloud-user ansible_ssh_private_key_file=~/.ssh/id_rsa
+10.3.12.73  ansible_ssh_user=cloud-user ansible_ssh_private_key_file=~/.ssh/id_rsa
+10.3.12.74  ansible_ssh_user=cloud-user ansible_ssh_private_key_file=~/.ssh/id_rsa
