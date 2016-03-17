@@ -30,8 +30,9 @@
   when: "inventory_hostname == groups['fabric'][0] and (containers is not defined or 'root' not in containers)"
   register: leader
 
-- name: wait for leader to shut down
-  pause: minutes=1
+- name: wait for fuse to stop
+  wait_for: port=8101 host=localhost delay=10 state=drained
+  when: "inventory_hostname == groups['fabric'][0] and leader|changed"
 
 - name: wait for fuse to start
   wait_for: port=8101 host=localhost delay=10
@@ -45,9 +46,14 @@
   with_indexed_items: groups['fabric']
   register: ensemble
 
-- name: wait for ensemble members to shut down
-  pause: minutes=1
+- name: wait for ensemble members to stop
+  wait_for: port=8101 host=localhost delay=10 state=drained
+  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
 
 - name: restart ensemble members
-  command: "service fuse restart"
+  command: "service fuse start"
+  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
+
+- name: wait for ensemble members to start
+  wait_for: port=8101 host=localhost delay=10
   when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
