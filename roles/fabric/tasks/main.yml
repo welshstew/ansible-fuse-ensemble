@@ -67,4 +67,4 @@
   command: "{{ fuse_client_invocation}} 'fabric:ensemble-add --force {% for member in play_hosts %}{% if loop.index > 1 %}root{{ loop.index }} {% endif %}{% endfor %}'"
   become: yes
   become_user: '{{ fuse_user }}'
-  when: inventory_hostname == groups['fabric'][0]
+  when: inventory_hostname == play_hosts[0]
