@@ -60,11 +60,19 @@
     state=present
   when: install_path.stat.exists is defined and install_path.stat.exists == False
 
-- name: detect fuse service
-  stat: 
-    path='{{ fuse_path }}/bin/fuse-service'
-  register: service_path
+- name: Install unit file
+  sudo: true
+  template: src=fuse.service.j2 dest=/etc/systemd/system/fuse.service owner=root mode=644
+  notify:
+    - reload systemd
+    - restart fuse
 
-- name: configure service wrapper
-  include: wrapper.yml
-  when: service_path.stat.exists == False
+
+#- name: detect fuse service
+#  stat: 
+#    path='{{ fuse_path }}/bin/fuse-service'
+#  register: service_path
+
+#- name: configure service wrapper
+#  include: wrapper.yml
+#  when: service_path.stat.exists == False

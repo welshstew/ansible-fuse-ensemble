@@ -1,8 +1,11 @@
 ---
 
+- name: verify fuse ssh console
+  wait_for: port=8101 host=localhost delay=10
+
 - name: set fabric leader ip
   set_fact: fabric_leader_ip={{ ansible_default_ipv4.address }}
-  when: inventory_hostname == groups['fabric'][0]
+  when: inventory_hostname == play_hosts[0]
 
 - name: set jolokia uri
   set_fact: 
@@ -27,33 +30,41 @@
   command: "{{ fuse_client_invocation}} 'fabric:create --new-user admin --new-user-password admin --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} --wait-for-provisioning'"
   become: yes
   become_user: '{{ fuse_user }}'
-  when: "inventory_hostname == groups['fabric'][0] and (containers is not defined or 'root' not in containers)"
+  when: "inventory_hostname == play_hosts[0] and (containers is not defined or 'root' not in containers)"
   register: leader
 
 - name: wait for fuse to stop
-  wait_for: port=8101 host=localhost delay=10 state=drained
-  when: "inventory_hostname == groups['fabric'][0] and leader|changed"
+  wait_for: port=8101 host=localhost delay=10 state=stopped
+  when: "inventory_hostname == play_hosts[0] and leader|changed"
 
-- name: wait for fuse to start
+- name: verify fuse ssh console
   wait_for: port=8101 host=localhost delay=10
-  when: "inventory_hostname == groups['fabric'][0] and leader|changed"
+  when: "leader|changed"
 
 - name: join fabric
-  command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(groups['fabric'][0]).get('fabric_leader_ip') }}:2181 {{ 'root%d' | format(item.0 + 1) }}'"
+  command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(play_hosts[0]).get('fabric_leader_ip') }}:2181 root{{ play_hosts.index(inventory_hostname) + 1 }}'"
   become: yes
   become_user: '{{ fuse_user }}'
-  when: "inventory_hostname != groups['fabric'][0] and inventory_hostname == groups['fabric'][item.0]"
-  with_indexed_items: groups['fabric']
+  when: "inventory_hostname != play_hosts[0]"
   register: ensemble
 
-- name: wait for ensemble members to stop
-  wait_for: port=8101 host=localhost delay=10 state=drained
-  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
+- name: wait for fuse to stop
+  wait_for: port=8101 host=localhost delay=10 state=stopped
+  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
 
-- name: restart ensemble members
-  command: "service fuse start"
-  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
+- name: start ensemble members
+  service: name=fuse state=started
+  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
 
-- name: wait for ensemble members to start
+- name: verify fuse ssh console
   wait_for: port=8101 host=localhost delay=10
-  when: "inventory_hostname != groups['fabric'][0] and ensemble.changed"
+  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
+
+- name: wait for containers
+  pause: minutes=2
+
+- name: form ensemble
+  command: "{{ fuse_client_invocation}} 'fabric:ensemble-add --force {% for member in play_hosts %}{% if loop.index > 1 %}root{{ loop.index }} {% endif %}{% endfor %}'"
+  become: yes
+  become_user: '{{ fuse_user }}'
+  when: inventory_hostname == groups['fabric'][0]

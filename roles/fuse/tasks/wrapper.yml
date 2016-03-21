@@ -49,9 +49,6 @@
     dest='/etc/init.d/fuse'
     state=link
 
-- name: enable fuse service
-  service: name=fuse enabled=yes
-
 - name: start fuse
   command: service fuse start
 

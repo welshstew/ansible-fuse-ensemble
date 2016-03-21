@@ -1,0 +1,19 @@
+[Unit]
+Description=Fuse
+After=syslog.target network.target
+
+[Service]
+ExecStart={{ fuse_path }}/bin/fuse start
+ExecStop={{ fuse_path }}/bin/fuse stop
+
+User={{ fuse_user }}
+Group={{ fuse_group }}
+
+SuccessExitStatus=0 143
+RestartSec=15
+Restart=on-failure
+
+LimitNOFILE=102642
+
+[Install]
+WantedBy=multi-user.target
