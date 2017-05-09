@@ -1,15 +1,15 @@
 ---
 
-- name: subscribe to RHEL content
-  redhat_subscription: 
-    state=present
-    username='{{ rh_login }}'
-    password='{{ rh_pass }}'
-    autosubscribe=true
-  when: ansible_distribution == 'RedHat' and rh_subscription
+# - name: subscribe to RHEL content
+#   redhat_subscription: 
+#     state=present
+#     username='{{ rh_login }}'
+#     password='{{ rh_pass }}'
+#     autosubscribe=true
+#   when: ansible_distribution == 'RedHat' and rh_subscription
 
-- name: install java 1.7
-  yum: name=java-1.7.0-openjdk state=present
+- name: install java 1.8
+  yum: name=java-1.8.0-openjdk state=present
 
 - name: install unzip
   yum: name=unzip state=present

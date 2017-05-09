@@ -3,13 +3,13 @@
 fuse_user: jboss
 fuse_group: jboss
 fuse_user_home: /opt/jboss
-fuse_archive: jboss-fuse-full-6.2.1.redhat-084.zip
-fuse_path: '{{ fuse_user_home }}/jboss-fuse-6.2.1.redhat-084'
+fuse_archive: jboss-fuse-karaf-6.3.0.redhat-187.zip
+fuse_path: '{{ fuse_user_home }}/jboss-fuse-6.3.0.redhat-187'
 fuse_admin: admin
 fuse_admin_pass: admin
 fuse_client_invocation: '{{ fuse_path }}/bin/client -r 3 -d 10 -u {{ fuse_admin }} -p {{ fuse_admin_pass }}'
 
-java_home: /usr/lib/jvm/jre-1.7.0-openjdk
+java_home: /usr/lib/jvm/jre-1.8.0-openjdk
 
 rh_subscription: yes
 rh_login: user@redhat.com
