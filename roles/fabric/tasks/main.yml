@@ -34,17 +34,17 @@
   register: leader
 
 - name: create ssh container root2
-  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts="-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.151" --host 10.191.0.151 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.151 root2'"
+  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts=\"-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.151\" --host 10.191.0.151 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.151 root2'"
   become: yes
   become_user: '{{ fuse_user }}'
 
 - name: create ssh container root3
-  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts="-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.151" --host 10.191.0.151 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.151 root2'"
+  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts=\"-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.152\" --host 10.191.0.152 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.152 root3'"
   become: yes
   become_user: '{{ fuse_user }}'
 
 - name: join ensemble
-  command: "{{ fuse_client_invocation}} 'fabric:ensemble-add root2 root3"
+  command: "{{ fuse_client_invocation}} 'fabric:ensemble-add root2 root3'"
   become: yes
   become_user: '{{ fuse_user }}'
 
