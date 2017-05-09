@@ -8,11 +8,11 @@
 #     autosubscribe=true
 #   when: ansible_distribution == 'RedHat' and rh_subscription
 
-- name: install java 1.8
-  yum: name=java-1.8.0-openjdk state=present
+# - name: install java 1.8
+#   yum: name=java-1.8.0-openjdk state=present
 
-- name: install unzip
-  yum: name=unzip state=present
+# - name: install unzip
+#   yum: name=unzip state=present
 
 - name: configure java security
   lineinfile:

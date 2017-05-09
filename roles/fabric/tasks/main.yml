@@ -27,44 +27,59 @@
   when: output.status is defined and output.status == 200
 
 - name: create fabric
-  command: "{{ fuse_client_invocation}} 'fabric:create --new-user admin --new-user-password admin --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} --wait-for-provisioning'"
+  command: "{{ fuse_client_invocation}} 'fabric:create --clean --force --wait-for-provisioning --profile fabric -r manualip -g manualip -m {{ ansible_default_ipv4.address }} --bootstrap-timeout 300000'"
   become: yes
   become_user: '{{ fuse_user }}'
   when: "inventory_hostname == play_hosts[0] and (containers is not defined or 'root' not in containers)"
   register: leader
 
-- name: wait for fuse to stop
-  wait_for: port=8101 host=localhost delay=10 state=stopped
-  when: "inventory_hostname == play_hosts[0] and leader|changed"
-
-- name: verify fuse ssh console
-  wait_for: port=8101 host=localhost delay=10
-  when: "leader|changed"
-
-- name: join fabric
-  command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(play_hosts[0]).get('fabric_leader_ip') }}:2181 root{{ play_hosts.index(inventory_hostname) + 1 }}'"
+- name: create ssh container root2
+  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts="-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.151" --host 10.191.0.151 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.151 root2"
   become: yes
   become_user: '{{ fuse_user }}'
-  when: "inventory_hostname != play_hosts[0]"
-  register: ensemble
 
-- name: wait for fuse to stop
-  wait_for: port=8101 host=localhost delay=10 state=stopped
-  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
-
-- name: start ensemble members
-  service: name=fuse state=started
-  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
-
-- name: verify fuse ssh console
-  wait_for: port=8101 host=localhost delay=10
-  when: "inventory_hostname != play_hosts[0] and ensemble|changed"
-
-- name: wait for containers
-  pause: minutes=2
-
-- name: form ensemble
-  command: "{{ fuse_client_invocation}} 'fabric:ensemble-add --force {% for member in play_hosts %}{% if loop.index > 1 %}root{{ loop.index }} {% endif %}{% endfor %}'"
+- name: create ssh container root3
+  command: "{{ fuse_client_invocation}} 'fabric:container-create-ssh --jvm-opts="-Xms512M -Xmx1024M -Djava.rmi.hostname=10.191.0.151" --host 10.191.0.151 --port 22 --path /opt/jboss/containers --user jboss --resolver manualip -m 10.191.0.151 root2"
   become: yes
   become_user: '{{ fuse_user }}'
-  when: inventory_hostname == play_hosts[0]
+
+- name: join ensemble
+  command: "{{ fuse_client_invocation}} 'fabric:ensemble-add root2 root3"
+  become: yes
+  become_user: '{{ fuse_user }}'
+
+# - name: wait for fuse to stop
+#   wait_for: port=8101 host=localhost delay=10 state=stopped
+#   when: "inventory_hostname == play_hosts[0] and leader|changed"
+
+# - name: verify fuse ssh console
+#   wait_for: port=8101 host=localhost delay=10
+#   when: "leader|changed"
+
+# - name: join fabric
+#   command: "{{ fuse_client_invocation}} 'fabric:join --force --zookeeper-password admin --resolver manualip --manual-ip {{ ansible_default_ipv4.address }} {{ hostvars.get(play_hosts[0]).get('fabric_leader_ip') }}:2181 root{{ play_hosts.index(inventory_hostname) + 1 }}'"
+#   become: yes
+#   become_user: '{{ fuse_user }}'
+#   when: "inventory_hostname != play_hosts[0]"
+#   register: ensemble
+
+# - name: wait for fuse to stop
+#   wait_for: port=8101 host=localhost delay=10 state=stopped
+#   when: "inventory_hostname != play_hosts[0] and ensemble|changed"
+
+# - name: start ensemble members
+#   service: name=fuse state=started
+#   when: "inventory_hostname != play_hosts[0] and ensemble|changed"
+
+# - name: verify fuse ssh console
+#   wait_for: port=8101 host=localhost delay=10
+#   when: "inventory_hostname != play_hosts[0] and ensemble|changed"
+
+# - name: wait for containers
+#   pause: minutes=2
+
+# - name: form ensemble
+#   command: "{{ fuse_client_invocation}} 'fabric:ensemble-add --force {% for member in play_hosts %}{% if loop.index > 1 %}root{{ loop.index }} {% endif %}{% endfor %}'"
+#   become: yes
+#   become_user: '{{ fuse_user }}'
+#   when: inventory_hostname == play_hosts[0]
