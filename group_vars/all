@@ -2,7 +2,7 @@
 
 fuse_user: jboss
 fuse_group: jboss
-fuse_user_home: /opt/jboss
+fuse_user_home: /opt/rh
 fuse_archive: jboss-fuse-karaf-6.3.0.redhat-187.zip
 fuse_path: '{{ fuse_user_home }}/jboss-fuse-6.3.0.redhat-187'
 fuse_admin: admin
