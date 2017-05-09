@@ -9,7 +9,7 @@ fuse_admin: admin
 fuse_admin_pass: admin
 fuse_client_invocation: '{{ fuse_path }}/bin/client -r 3 -d 10 -u {{ fuse_admin }} -p {{ fuse_admin_pass }}'
 
-java_home: /usr/lib/jvm/jre-1.8.0-openjdk
+java_home: /usr/java/jdk1.8.0_102/jre
 
 rh_subscription: yes
 rh_login: user@redhat.com
